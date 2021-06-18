@@ -1,5 +1,6 @@
 <?php 
 include("conexion.php");
+include("enviar_correo.php");
 session_start();
 if (isset($_SESSION['id_usuario'])) {
 header("Location: admin.php");
@@ -35,6 +36,7 @@ if (isset($_POST["registrar"])) {
 	$usuario = mysqli_real_escape_string($conexion,$_POST['user']);
 	$password = mysqli_real_escape_string($conexion,$_POST['pass']);
 	$password_encriptada = sha1($password);
+	$token=sha1(rand(0,1000));
 	$sqluser="SELECT idusuarios FROM usuarios 
 				WHERE usuario ='$usuario'";
 	$resultadouser = $conexion->query($sqluser);
@@ -46,15 +48,20 @@ if (isset($_POST["registrar"])) {
 		</script>";
 	}else{
 		/*Insertar infirmacion del usuario*/
-		$sqlusuario = "INSERT INTO usuarios(
-			Nombre,Correo,Usuario,Password)
-			VALUES('$nombre','$correo','$usuario','$password_encriptada')";
+		$sqlusuario = "INSERT INTO usuarios(Nombre,Correo,Usuario,Password,Token)
+			VALUES('$nombre','$correo','$usuario','$password_encriptada','$token')";
 		$resultadousuario = $conexion->query($sqlusuario);
 		if ($resultadousuario > 0) {
 			echo "<script>
-				alert('registro exitoso');
+				alert('registro exitoso $nombre, Tu cuenta fue creada! te enviamos un correo,confirma tu cuenta haciendo click en el enlace enviado');
 				window.location ='index.php';
 		</script>";
+		$para_usuario = $correo;
+		$asunto ='Verifica tu cuenta';
+		$mensaje ='Hola '.$nombre.'Gracias por registrarte
+		Por favor confirma tu cuenta haciendo click en el siguiente enlace :
+		http://localhost/loginphp/activar_correo.php?email='.$correo.'&token='.$token;
+		sendEmail($para_usuario,$asunto,$mensaje);
 		}else{
 			echo "<script>
 				alert('Error al registrarse');
